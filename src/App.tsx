@@ -13,6 +13,17 @@ export interface ROIData {
   processingCostReduction: number;
   shelfLifeExtension: number;
   wasteReduction: number;
+  // Product Details
+  productName: string;
+  currentProductionVolume: number;
+  currentSellingPrice: number;
+  currentCOGS: number;
+  currentSpoilageRate: number;
+  operatingDaysPerYear: number;
+  // HPP Scenario
+  projectedSpoilageRate: number;
+  hppCostPerUnit: number;
+  targetShelfLifeExtension: number;
 }
 
 export interface SustainabilityData {
@@ -52,6 +63,17 @@ function App() {
     processingCostReduction: 15,
     shelfLifeExtension: 200,
     wasteReduction: 30,
+    // Product Details
+    productName: 'Cold-Pressed Juice',
+    currentProductionVolume: 1000,
+    currentSellingPrice: 4.50,
+    currentCOGS: 2.20,
+    currentSpoilageRate: 15,
+    operatingDaysPerYear: 250,
+    // HPP Scenario
+    projectedSpoilageRate: 3,
+    hppCostPerUnit: 0.35,
+    targetShelfLifeExtension: 14,
   });
   
   const [sustainabilityData, setSustainabilityData] = useState<SustainabilityData>({
@@ -64,8 +86,25 @@ function App() {
   });
 
   const calculateResults = (): CalculationResults => {
+    // Calculate based on product details
+    const annualProductionVolume = roiData.currentProductionVolume * roiData.operatingDaysPerYear;
+    const currentAnnualWaste = annualProductionVolume * (roiData.currentSpoilageRate / 100);
+    const projectedAnnualWaste = annualProductionVolume * (roiData.projectedSpoilageRate / 100);
+    const wasteReduction = currentAnnualWaste - projectedAnnualWaste;
+    
+    // Revenue from reduced waste (units that would have been wasted can now be sold)
+    const revenueFromWasteReduction = wasteReduction * roiData.currentSellingPrice;
+    
+    // Cost savings from reduced waste disposal and raw materials
+    const costSavingsFromWaste = wasteReduction * roiData.currentCOGS;
+    
+    // Additional HPP processing costs
+    const additionalHPPCosts = annualProductionVolume * roiData.hppCostPerUnit;
+    
+    // Net annual savings
+    const netAnnualSavings = revenueFromWasteReduction + costSavingsFromWaste - additionalHPPCosts;
+    
     // ROI Calculations
-    const netAnnualSavings = roiData.annualSavings - roiData.operationalCosts;
     const paybackPeriod = roiData.initialInvestment / netAnnualSavings;
     const totalSavings5Year = netAnnualSavings * 5;
     const roi5Year = ((totalSavings5Year - roiData.initialInvestment) / roiData.initialInvestment) * 100;
